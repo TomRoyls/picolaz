@@ -20,7 +20,7 @@ LazWriter::LazWriter(const std::string& path, const Config& config)
     write_laszip_vlr();
 
     // Record where point data starts
-    header_.offset_to_point_data = static_cast<u32>(file_.tellp());
+    header_.offset_to_point_data = static_cast<std::uint32_t>(file_.tellp());
 
     // Rewrite header with correct offset
     file_.seekp(0);
@@ -51,7 +51,7 @@ void LazWriter::write_header() {
     header_.header_size = 375;
     header_.offset_to_point_data = 375;
     header_.number_of_vlrs = 1;
-    header_.point_data_record_format = static_cast<u8>(config_.format);
+    header_.point_data_record_format = static_cast<std::uint8_t>(config_.format);
     header_.point_data_record_length = point_record_length(config_.format);
 
     header_.x_scale_factor = config_.x_scale;
@@ -98,7 +98,7 @@ void LazWriter::write_laszip_vlr() {
         laszip_vlr_.items.push_back(rgb_item);
     }
 
-    laszip_vlr_.num_items = static_cast<u16>(laszip_vlr_.items.size());
+    laszip_vlr_.num_items = static_cast<std::uint16_t>(laszip_vlr_.items.size());
 
     VlrHeader vlr_hdr;
     std::memset(&vlr_hdr, 0, sizeof(VlrHeader));
@@ -109,7 +109,7 @@ void LazWriter::write_laszip_vlr() {
     // compressor(2) + coder(2) + ver_major(1) + ver_minor(1) + ver_rev(2) +
     // options(4) + chunk_size(4) + num_special_evlrs(8) + offset_special_evlrs(8) +
     // num_items(2) + items(6 each)
-    u16 payload_size = 34 + static_cast<u16>(laszip_vlr_.items.size() * 6);
+    std::uint16_t payload_size = 34 + static_cast<std::uint16_t>(laszip_vlr_.items.size() * 6);
     vlr_hdr.record_length_after_header = payload_size;
 
     std::strncpy(vlr_hdr.description, "picolaz by picolaz", 31);
@@ -144,13 +144,13 @@ void LazWriter::write_point(const Point14& pt) {
     std::memset(&packed, 0, sizeof(packed));
     point_to_packed(pt, packed);
 
-    point_comp_.write(reinterpret_cast<const u8*>(&packed));
+    point_comp_.write(reinterpret_cast<const std::uint8_t*>(&packed));
 
     if (format_has_nir(config_.format)) {
-        u16 rgbnir[4] = { pt.red, pt.green, pt.blue, pt.nir };
+        std::uint16_t rgbnir[4] = { pt.red, pt.green, pt.blue, pt.nir };
         rgbnir_comp_->write(rgbnir);
     } else if (format_has_rgb(config_.format)) {
-        u16 rgb[3] = { pt.red, pt.green, pt.blue };
+        std::uint16_t rgb[3] = { pt.red, pt.green, pt.blue };
         rgb_comp_->write(rgb);
     }
 
@@ -205,14 +205,14 @@ void LazWriter::close() {
     }
 
     // Record EVLR position
-    u64 evlr_offset = static_cast<u64>(file_.tellp());
+    std::uint64_t evlr_offset = static_cast<std::uint64_t>(file_.tellp());
 
     write_chunk_table_evlr();
 
     // Patch header
     header_.number_of_point_records = total_points_;
     if (total_points_ <= 0xFFFFFFFF) {
-        header_.legacy_number_of_point_records = static_cast<u32>(total_points_);
+        header_.legacy_number_of_point_records = static_cast<std::uint32_t>(total_points_);
     }
     header_.start_of_first_evlr = evlr_offset;
     header_.number_of_evlrs = 1;
@@ -236,18 +236,18 @@ void LazWriter::write_chunk_table_evlr() {
     std::strncpy(evlr_hdr.user_id, "laszip encoded", 15);
     evlr_hdr.record_id = 0;
 
-    // Chunk table: version(u32) + count(u32) + (count+1) entries of u32
-    // Actually LASzip chunk table format: version(u32) + count(u32) + count entries of u32
-    u32 version = 0;
-    u32 count = static_cast<u32>(chunk_table_.size());
-    u64 payload_size = 8 + static_cast<u64>(count) * 4;
+    // Chunk table: version(std::uint32_t) + count(std::uint32_t) + (count+1) entries of std::uint32_t
+    // Actually LASzip chunk table format: version(std::uint32_t) + count(std::uint32_t) + count entries of std::uint32_t
+    std::uint32_t version = 0;
+    std::uint32_t count = static_cast<std::uint32_t>(chunk_table_.size());
+    std::uint64_t payload_size = 8 + static_cast<std::uint64_t>(count) * 4;
     evlr_hdr.record_length_after_header = payload_size;
 
     file_.write(reinterpret_cast<const char*>(&evlr_hdr), sizeof(EvlrHeader));
     file_.write(reinterpret_cast<const char*>(&version), 4);
     file_.write(reinterpret_cast<const char*>(&count), 4);
 
-    for (u32 i = 0; i < count; ++i) {
+    for (std::uint32_t i = 0; i < count; ++i) {
         file_.write(reinterpret_cast<const char*>(&chunk_table_[i]), 4);
     }
 }
@@ -272,18 +272,18 @@ void LazWriter::point_to_packed(const Point14& pt, PackedPoint14& p) {
     p.gps_time_change = true;
 
     // Legacy fields
-    p.legacy_return_number = std::min(static_cast<u8>(pt.return_number), static_cast<u8>(7));
-    p.legacy_number_of_returns = std::min(static_cast<u8>(pt.number_of_returns), static_cast<u8>(7));
+    p.legacy_return_number = std::min(static_cast<std::uint8_t>(pt.return_number), static_cast<std::uint8_t>(7));
+    p.legacy_number_of_returns = std::min(static_cast<std::uint8_t>(pt.number_of_returns), static_cast<std::uint8_t>(7));
     p.legacy_classification = pt.classification < 32 ? pt.classification : 0;
-    p.legacy_scan_angle_rank = i8_clamp(static_cast<i32>(std::round(pt.scan_angle * 0.006)));
+    p.legacy_scan_angle_rank = i8_clamp(static_cast<std::int32_t>(std::round(pt.scan_angle * 0.006)));
     p.legacy_flags = pt.classification_flags & 0x07;
-    p.legacy_point_type = static_cast<u8>(config_.format) & 0x03;
+    p.legacy_point_type = static_cast<std::uint8_t>(config_.format) & 0x03;
 }
 
 void LazWriter::update_bounds(const Point14& pt) {
-    f64 x = pt.x * config_.x_scale + config_.x_offset;
-    f64 y = pt.y * config_.y_scale + config_.y_offset;
-    f64 z = pt.z * config_.z_scale + config_.z_offset;
+    double x = pt.x * config_.x_scale + config_.x_offset;
+    double y = pt.y * config_.y_scale + config_.y_offset;
+    double z = pt.z * config_.z_scale + config_.z_offset;
 
     if (x < min_x_) min_x_ = x;
     if (x > max_x_) max_x_ = x;

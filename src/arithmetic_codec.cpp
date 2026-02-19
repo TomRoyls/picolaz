@@ -20,7 +20,7 @@ void ArithmeticBitModel::update() {
         if (bit_0_count == bit_count) ++bit_count;
     }
 
-    u32 scale = 0x80000000U / bit_count;
+    std::uint32_t scale = 0x80000000U / bit_count;
     bit_0_prob = (bit_0_count * scale) >> (31 - BM__LengthShift);
 
     update_cycle = (5 * update_cycle) >> 2;
@@ -73,7 +73,7 @@ void ArithmeticModel::free_data() {
     decoder_table = nullptr;
 }
 
-bool ArithmeticModel::init(u32 num_symbols, bool is_compress, const u32* init_table) {
+bool ArithmeticModel::init(std::uint32_t num_symbols, bool is_compress, const std::uint32_t* init_table) {
     free_data();
     symbols = num_symbols;
     compress = is_compress;
@@ -81,9 +81,9 @@ bool ArithmeticModel::init(u32 num_symbols, bool is_compress, const u32* init_ta
 
     if (symbols < 2 || symbols > (1U << 11)) return false;
 
-    u32 table_elements = 0;
+    std::uint32_t table_elements = 0;
     if (!compress && symbols > 16) {
-        u32 table_bits = 3;
+        std::uint32_t table_bits = 3;
         while (symbols > (1U << (table_bits + 2))) ++table_bits;
         table_size = 1U << table_bits;
         table_shift = DM__LengthShift - table_bits;
@@ -93,8 +93,8 @@ bool ArithmeticModel::init(u32 num_symbols, bool is_compress, const u32* init_ta
         table_shift = 0;
     }
 
-    u32 alloc_size = 2 * symbols + table_elements;
-    distribution = new u32[alloc_size];
+    std::uint32_t alloc_size = 2 * symbols + table_elements;
+    distribution = new std::uint32_t[alloc_size];
     symbol_count = distribution + symbols;
     if (table_elements) {
         decoder_table = symbol_count + symbols;
@@ -105,9 +105,9 @@ bool ArithmeticModel::init(u32 num_symbols, bool is_compress, const u32* init_ta
     total_count = 0;
     update_cycle = symbols;
     if (init_table) {
-        for (u32 i = 0; i < symbols; ++i) symbol_count[i] = init_table[i];
+        for (std::uint32_t i = 0; i < symbols; ++i) symbol_count[i] = init_table[i];
     } else {
-        for (u32 i = 0; i < symbols; ++i) symbol_count[i] = 1;
+        for (std::uint32_t i = 0; i < symbols; ++i) symbol_count[i] = 1;
     }
 
     update();
@@ -120,14 +120,14 @@ void ArithmeticModel::update() {
     // halve counts when a threshold is reached
     if ((total_count += update_cycle) > DM__MaxCount) {
         total_count = 0;
-        for (u32 n = 0; n < symbols; ++n) {
+        for (std::uint32_t n = 0; n < symbols; ++n) {
             total_count += (symbol_count[n] = (symbol_count[n] + 1) >> 1);
         }
     }
 
     // compute cumulative distribution, decoder table
-    u32 k, sum = 0, s = 0;
-    u32 scale = 0x80000000U / total_count;
+    std::uint32_t k, sum = 0, s = 0;
+    std::uint32_t scale = 0x80000000U / total_count;
 
     if (compress || (table_size == 0)) {
         for (k = 0; k < symbols; ++k) {
@@ -138,7 +138,7 @@ void ArithmeticModel::update() {
         for (k = 0; k < symbols; ++k) {
             distribution[k] = (scale * sum) >> (31 - DM__LengthShift);
             sum += symbol_count[k];
-            u32 w = distribution[k] >> table_shift;
+            std::uint32_t w = distribution[k] >> table_shift;
             while (s < w) decoder_table[++s] = k - 1;
         }
         decoder_table[0] = 0;
@@ -147,7 +147,7 @@ void ArithmeticModel::update() {
 
     // set frequency of model updates
     update_cycle = (5 * update_cycle) >> 2;
-    u32 max_cycle = (symbols + 6) << 3;
+    std::uint32_t max_cycle = (symbols + 6) << 3;
     if (update_cycle > max_cycle) update_cycle = max_cycle;
     symbols_until_update = update_cycle;
 }
@@ -162,7 +162,7 @@ void ArithmeticEncoder::init(ByteStreamOut* out) {
 }
 
 void ArithmeticEncoder::done() {
-    u32 init_base = base_;
+    std::uint32_t init_base = base_;
     bool another_byte = true;
 
     if (length_ > 2 * AC__MinLength) {
@@ -178,23 +178,23 @@ void ArithmeticEncoder::done() {
 
     renorm_enc_interval();
 
-    u32 buf_bytes = buf_pos_;
+    std::uint32_t buf_bytes = buf_pos_;
     if (buf_bytes) out_->put_bytes(buf_, buf_bytes);
 
-    u8 zero = 0;
+    std::uint8_t zero = 0;
     out_->put_byte(zero);
     out_->put_byte(zero);
     if (another_byte) out_->put_byte(zero);
 }
 
-void ArithmeticEncoder::encodeBit(ArithmeticBitModel& m, u32 sym) {
-    u32 x = m.bit_0_prob * (length_ >> BM__LengthShift);
+void ArithmeticEncoder::encodeBit(ArithmeticBitModel& m, std::uint32_t sym) {
+    std::uint32_t x = m.bit_0_prob * (length_ >> BM__LengthShift);
 
     if (sym == 0) {
         length_ = x;
         ++m.bit_0_count;
     } else {
-        u32 init_base = base_;
+        std::uint32_t init_base = base_;
         base_ += x;
         length_ -= x;
         if (init_base > base_) propagate_carry();
@@ -204,9 +204,9 @@ void ArithmeticEncoder::encodeBit(ArithmeticBitModel& m, u32 sym) {
     if (--m.bits_until_update == 0) m.update();
 }
 
-void ArithmeticEncoder::encodeSymbol(ArithmeticModel& m, u32 sym) {
-    u32 x;
-    u32 init_base = base_;
+void ArithmeticEncoder::encodeSymbol(ArithmeticModel& m, std::uint32_t sym) {
+    std::uint32_t x;
+    std::uint32_t init_base = base_;
 
     if (sym == m.last_symbol) {
         x = m.distribution[sym] * (length_ >> DM__LengthShift);
@@ -225,52 +225,52 @@ void ArithmeticEncoder::encodeSymbol(ArithmeticModel& m, u32 sym) {
     if (--m.symbols_until_update == 0) m.update();
 }
 
-void ArithmeticEncoder::writeBit(u32 sym) {
-    u32 init_base = base_;
+void ArithmeticEncoder::writeBit(std::uint32_t sym) {
+    std::uint32_t init_base = base_;
     base_ += sym * (length_ >>= 1);
     if (init_base > base_) propagate_carry();
     if (length_ < AC__MinLength) renorm_enc_interval();
 }
 
-void ArithmeticEncoder::writeBits(u32 bits, u32 sym) {
+void ArithmeticEncoder::writeBits(std::uint32_t bits, std::uint32_t sym) {
     if (bits > 19) {
-        writeShort(static_cast<u16>(sym & 0xFFFF));
+        writeShort(static_cast<std::uint16_t>(sym & 0xFFFF));
         sym >>= 16;
         bits -= 16;
     }
 
-    u32 init_base = base_;
+    std::uint32_t init_base = base_;
     base_ += sym * (length_ >>= bits);
     if (init_base > base_) propagate_carry();
     if (length_ < AC__MinLength) renorm_enc_interval();
 }
 
-void ArithmeticEncoder::writeByte(u8 sym) {
-    u32 init_base = base_;
-    base_ += static_cast<u32>(sym) * (length_ >>= 8);
+void ArithmeticEncoder::writeByte(std::uint8_t sym) {
+    std::uint32_t init_base = base_;
+    base_ += static_cast<std::uint32_t>(sym) * (length_ >>= 8);
     if (init_base > base_) propagate_carry();
     if (length_ < AC__MinLength) renorm_enc_interval();
 }
 
-void ArithmeticEncoder::writeShort(u16 sym) {
-    u32 init_base = base_;
-    base_ += static_cast<u32>(sym) * (length_ >>= 16);
+void ArithmeticEncoder::writeShort(std::uint16_t sym) {
+    std::uint32_t init_base = base_;
+    base_ += static_cast<std::uint32_t>(sym) * (length_ >>= 16);
     if (init_base > base_) propagate_carry();
     if (length_ < AC__MinLength) renorm_enc_interval();
 }
 
-void ArithmeticEncoder::writeInt(u32 sym) {
-    writeShort(static_cast<u16>(sym & 0xFFFF));
-    writeShort(static_cast<u16>(sym >> 16));
+void ArithmeticEncoder::writeInt(std::uint32_t sym) {
+    writeShort(static_cast<std::uint16_t>(sym & 0xFFFF));
+    writeShort(static_cast<std::uint16_t>(sym >> 16));
 }
 
-void ArithmeticEncoder::writeInt64(u64 sym) {
-    writeInt(static_cast<u32>(sym & 0xFFFFFFFFU));
-    writeInt(static_cast<u32>(sym >> 32));
+void ArithmeticEncoder::writeInt64(std::uint64_t sym) {
+    writeInt(static_cast<std::uint32_t>(sym & 0xFFFFFFFFU));
+    writeInt(static_cast<std::uint32_t>(sym >> 32));
 }
 
 void ArithmeticEncoder::propagate_carry() {
-    u32 p = buf_pos_ - 1;
+    std::uint32_t p = buf_pos_ - 1;
     while (buf_[p] == 0xFF) {
         buf_[p] = 0;
         if (p == 0) {
@@ -286,7 +286,7 @@ void ArithmeticEncoder::propagate_carry() {
 
 void ArithmeticEncoder::renorm_enc_interval() {
     do {
-        buf_[buf_pos_++] = static_cast<u8>(base_ >> 24);
+        buf_[buf_pos_++] = static_cast<std::uint8_t>(base_ >> 24);
         base_ <<= 8;
         length_ <<= 8;
 
@@ -304,15 +304,15 @@ void ArithmeticDecoder::init(ByteStreamIn* in) {
     in_ = in;
     length_ = AC__MaxLength;
     // Read 4 initial bytes big-endian into value
-    value_ = (static_cast<u32>(in_->get_byte()) << 24) |
-             (static_cast<u32>(in_->get_byte()) << 16) |
-             (static_cast<u32>(in_->get_byte()) << 8) |
-             static_cast<u32>(in_->get_byte());
+    value_ = (static_cast<std::uint32_t>(in_->get_byte()) << 24) |
+             (static_cast<std::uint32_t>(in_->get_byte()) << 16) |
+             (static_cast<std::uint32_t>(in_->get_byte()) << 8) |
+             static_cast<std::uint32_t>(in_->get_byte());
 }
 
-u32 ArithmeticDecoder::decodeBit(ArithmeticBitModel& m) {
-    u32 x = m.bit_0_prob * (length_ >> BM__LengthShift);
-    u32 sym = (value_ >= x);
+std::uint32_t ArithmeticDecoder::decodeBit(ArithmeticBitModel& m) {
+    std::uint32_t x = m.bit_0_prob * (length_ >> BM__LengthShift);
+    std::uint32_t sym = (value_ >= x);
 
     if (sym == 0) {
         length_ = x;
@@ -328,18 +328,18 @@ u32 ArithmeticDecoder::decodeBit(ArithmeticBitModel& m) {
     return sym;
 }
 
-u32 ArithmeticDecoder::decodeSymbol(ArithmeticModel& m) {
-    u32 n, sym, x, y = length_;
+std::uint32_t ArithmeticDecoder::decodeSymbol(ArithmeticModel& m) {
+    std::uint32_t n, sym, x, y = length_;
 
     if (m.decoder_table) {
-        u32 dv = value_ / (length_ >>= DM__LengthShift);
-        u32 t = dv >> m.table_shift;
+        std::uint32_t dv = value_ / (length_ >>= DM__LengthShift);
+        std::uint32_t t = dv >> m.table_shift;
 
         sym = m.decoder_table[t];
         n = m.decoder_table[t + 1] + 1;
 
         while (n > sym + 1) {
-            u32 k = (sym + n) >> 1;
+            std::uint32_t k = (sym + n) >> 1;
             if (m.distribution[k] > dv) n = k; else sym = k;
         }
 
@@ -350,10 +350,10 @@ u32 ArithmeticDecoder::decodeSymbol(ArithmeticModel& m) {
     } else {
         x = sym = 0;
         length_ >>= DM__LengthShift;
-        u32 k = (n = m.symbols) >> 1;
+        std::uint32_t k = (n = m.symbols) >> 1;
 
         do {
-            u32 z = length_ * m.distribution[k];
+            std::uint32_t z = length_ * m.distribution[k];
             if (z > value_) { n = k; y = z; }
             else { sym = k; x = z; }
         } while ((k = (sym + n) >> 1) != sym);
@@ -370,55 +370,55 @@ u32 ArithmeticDecoder::decodeSymbol(ArithmeticModel& m) {
     return sym;
 }
 
-u32 ArithmeticDecoder::readBit() {
-    u32 sym = value_ / (length_ >>= 1);
+std::uint32_t ArithmeticDecoder::readBit() {
+    std::uint32_t sym = value_ / (length_ >>= 1);
     value_ -= length_ * sym;
     if (length_ < AC__MinLength) renorm_dec_interval();
     return sym;
 }
 
-u32 ArithmeticDecoder::readBits(u32 bits) {
+std::uint32_t ArithmeticDecoder::readBits(std::uint32_t bits) {
     if (bits > 19) {
-        u32 lo = readShort();
-        u32 hi = readBits(bits - 16);
+        std::uint32_t lo = readShort();
+        std::uint32_t hi = readBits(bits - 16);
         return lo | (hi << 16);
     }
 
-    u32 sym = value_ / (length_ >>= bits);
+    std::uint32_t sym = value_ / (length_ >>= bits);
     value_ -= length_ * sym;
     if (length_ < AC__MinLength) renorm_dec_interval();
     return sym;
 }
 
-u8 ArithmeticDecoder::readByte() {
-    u32 sym = value_ / (length_ >>= 8);
+std::uint8_t ArithmeticDecoder::readByte() {
+    std::uint32_t sym = value_ / (length_ >>= 8);
     value_ -= length_ * sym;
     if (length_ < AC__MinLength) renorm_dec_interval();
-    return static_cast<u8>(sym);
+    return static_cast<std::uint8_t>(sym);
 }
 
-u16 ArithmeticDecoder::readShort() {
-    u32 sym = value_ / (length_ >>= 16);
+std::uint16_t ArithmeticDecoder::readShort() {
+    std::uint32_t sym = value_ / (length_ >>= 16);
     value_ -= length_ * sym;
     if (length_ < AC__MinLength) renorm_dec_interval();
-    return static_cast<u16>(sym);
+    return static_cast<std::uint16_t>(sym);
 }
 
-u32 ArithmeticDecoder::readInt() {
-    u32 lo = readShort();
-    u32 hi = readShort();
-    return lo | (static_cast<u32>(hi) << 16);
+std::uint32_t ArithmeticDecoder::readInt() {
+    std::uint32_t lo = readShort();
+    std::uint32_t hi = readShort();
+    return lo | (static_cast<std::uint32_t>(hi) << 16);
 }
 
-u64 ArithmeticDecoder::readInt64() {
-    u64 lo = readInt();
-    u64 hi = readInt();
+std::uint64_t ArithmeticDecoder::readInt64() {
+    std::uint64_t lo = readInt();
+    std::uint64_t hi = readInt();
     return lo | (hi << 32);
 }
 
 void ArithmeticDecoder::renorm_dec_interval() {
     do {
-        value_ = (value_ << 8) | static_cast<u32>(in_->get_byte());
+        value_ = (value_ << 8) | static_cast<std::uint32_t>(in_->get_byte());
         length_ <<= 8;
     } while (length_ < AC__MinLength);
 }

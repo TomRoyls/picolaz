@@ -12,18 +12,18 @@ public:
 
     void chunk_sizes(ByteStreamIn* in);
     void init(ByteStreamIn* in);
-    void read(u16* rgb);
+    void read(std::uint16_t* rgb);
 
 private:
-    void init_context(u32 sc);
+    void init_context(std::uint32_t sc);
 
-    std::vector<u8> layer_data_;
-    u32 layer_size_{0};
+    std::vector<std::uint8_t> layer_data_;
+    std::uint32_t layer_size_{0};
     ByteStreamIn layer_in_;
     ArithmeticDecoder layer_dec_;
 
     LAScontextRGB14 contexts_[4];
-    u32 current_context_{0};
+    std::uint32_t current_context_{0};
     bool first_point_{true};
 };
 

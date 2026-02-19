@@ -31,7 +31,7 @@ void LazReader::read_header() {
         throw LazError("only LAS 1.4 is supported");
     }
 
-    u8 fmt = header_.point_data_record_format;
+    std::uint8_t fmt = header_.point_data_record_format;
     if (fmt < 6 || fmt > 8) throw LazError("unsupported point format");
     format_ = static_cast<PointFormat>(fmt);
 
@@ -45,7 +45,7 @@ void LazReader::read_header() {
 void LazReader::find_laszip_vlr() {
     file_.seekg(sizeof(LasHeader));
 
-    for (u32 i = 0; i < header_.number_of_vlrs; ++i) {
+    for (std::uint32_t i = 0; i < header_.number_of_vlrs; ++i) {
         VlrHeader vlr_hdr;
         file_.read(reinterpret_cast<char*>(&vlr_hdr), sizeof(VlrHeader));
         if (!file_.good()) throw LazError("failed to read VLR header");
@@ -65,7 +65,7 @@ void LazReader::find_laszip_vlr() {
             file_.read(reinterpret_cast<char*>(&laszip_vlr_.num_items), 2);
 
             laszip_vlr_.items.resize(laszip_vlr_.num_items);
-            for (u16 j = 0; j < laszip_vlr_.num_items; ++j) {
+            for (std::uint16_t j = 0; j < laszip_vlr_.num_items; ++j) {
                 file_.read(reinterpret_cast<char*>(&laszip_vlr_.items[j].type), 2);
                 file_.read(reinterpret_cast<char*>(&laszip_vlr_.items[j].size), 2);
                 file_.read(reinterpret_cast<char*>(&laszip_vlr_.items[j].version), 2);
@@ -90,12 +90,12 @@ void LazReader::read_chunk_table() {
     file_.read(reinterpret_cast<char*>(&evlr_hdr), sizeof(EvlrHeader));
     if (!file_.good()) throw LazError("failed to read EVLR header");
 
-    u32 version, count;
+    std::uint32_t version, count;
     file_.read(reinterpret_cast<char*>(&version), 4);
     file_.read(reinterpret_cast<char*>(&count), 4);
 
     chunk_table_.resize(count);
-    for (u32 i = 0; i < count; ++i) {
+    for (std::uint32_t i = 0; i < count; ++i) {
         file_.read(reinterpret_cast<char*>(&chunk_table_[i]), 4);
     }
 
@@ -105,7 +105,7 @@ void LazReader::read_chunk_table() {
 bool LazReader::start_next_chunk() {
     if (current_chunk_ >= chunk_table_.size()) return false;
 
-    u32 chunk_byte_size = chunk_table_[current_chunk_];
+    std::uint32_t chunk_byte_size = chunk_table_[current_chunk_];
     chunk_data_.resize(chunk_byte_size);
     file_.read(reinterpret_cast<char*>(chunk_data_.data()), chunk_byte_size);
     if (!file_.good()) return false;
@@ -121,8 +121,8 @@ bool LazReader::start_next_chunk() {
     if (rgbnir_decomp_) rgbnir_decomp_->init(&chunk_in_);
 
     // Determine points in this chunk
-    u64 remaining = header_.number_of_point_records - total_points_read_;
-    points_in_chunk_ = static_cast<u32>(std::min(static_cast<u64>(laszip_vlr_.chunk_size), remaining));
+    std::uint64_t remaining = header_.number_of_point_records - total_points_read_;
+    points_in_chunk_ = static_cast<std::uint32_t>(std::min(static_cast<std::uint64_t>(laszip_vlr_.chunk_size), remaining));
     points_read_in_chunk_ = 0;
 
     ++current_chunk_;
@@ -138,17 +138,17 @@ bool LazReader::read_point(Point14& pt) {
 
     PackedPoint14 packed;
     std::memset(&packed, 0, sizeof(packed));
-    point_decomp_.read(reinterpret_cast<u8*>(&packed));
+    point_decomp_.read(reinterpret_cast<std::uint8_t*>(&packed));
 
     if (format_has_nir(format_)) {
-        u16 rgbnir[4]{};
+        std::uint16_t rgbnir[4]{};
         rgbnir_decomp_->read(rgbnir);
         packed.rgb[0] = rgbnir[0];
         packed.rgb[1] = rgbnir[1];
         packed.rgb[2] = rgbnir[2];
         packed.rgb[3] = rgbnir[3];
     } else if (format_has_rgb(format_)) {
-        u16 rgb[3]{};
+        std::uint16_t rgb[3]{};
         rgb_decomp_->read(rgb);
         packed.rgb[0] = rgb[0];
         packed.rgb[1] = rgb[1];
@@ -162,11 +162,11 @@ bool LazReader::read_point(Point14& pt) {
     return true;
 }
 
-std::vector<Point14> LazReader::read_points(u64 count) {
+std::vector<Point14> LazReader::read_points(std::uint64_t count) {
     std::vector<Point14> result;
     result.reserve(static_cast<size_t>(count));
     Point14 pt;
-    for (u64 i = 0; i < count; ++i) {
+    for (std::uint64_t i = 0; i < count; ++i) {
         if (!read_point(pt)) break;
         result.push_back(pt);
     }

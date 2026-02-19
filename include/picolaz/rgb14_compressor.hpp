@@ -10,19 +10,19 @@ public:
     RGB14Compressor();
 
     void init(ByteStreamOut* main_out);
-    void write(const u16* rgb);
+    void write(const std::uint16_t* rgb);
     void chunk_sizes();
     void chunk_bytes();
 
 private:
-    void init_context(u32 sc);
+    void init_context(std::uint32_t sc);
 
     ByteStreamOut* main_out_{nullptr};
     ByteStreamOut layer_out_;
     ArithmeticEncoder layer_enc_;
 
     LAScontextRGB14 contexts_[4];
-    u32 current_context_{0};
+    std::uint32_t current_context_{0};
     bool first_point_{true};
 };
 

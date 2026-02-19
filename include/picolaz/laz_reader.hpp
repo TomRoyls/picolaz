@@ -21,10 +21,10 @@ public:
 
     const LasHeader& header() const { return header_; }
     PointFormat format() const { return format_; }
-    u64 point_count() const { return header_.number_of_point_records; }
+    std::uint64_t point_count() const { return header_.number_of_point_records; }
 
     bool read_point(Point14& pt);
-    std::vector<Point14> read_points(u64 count);
+    std::vector<Point14> read_points(std::uint64_t count);
     void close();
 
 private:
@@ -43,14 +43,14 @@ private:
     std::unique_ptr<RGB14Decompressor> rgb_decomp_;
     std::unique_ptr<RGBNIR14Decompressor> rgbnir_decomp_;
 
-    std::vector<u32> chunk_table_;
-    u32 current_chunk_{0};
-    u32 points_in_chunk_{0};
-    u32 points_read_in_chunk_{0};
-    u64 total_points_read_{0};
+    std::vector<std::uint32_t> chunk_table_;
+    std::uint32_t current_chunk_{0};
+    std::uint32_t points_in_chunk_{0};
+    std::uint32_t points_read_in_chunk_{0};
+    std::uint64_t total_points_read_{0};
     bool closed_{false};
 
-    std::vector<u8> chunk_data_;
+    std::vector<std::uint8_t> chunk_data_;
     ByteStreamIn chunk_in_;
 };
 

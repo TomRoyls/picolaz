@@ -14,7 +14,7 @@ TEST_CASE("ArithmeticBitModel encode/decode single bits", "[arithmetic]") {
     ArithmeticBitModel bm_enc;
     bm_enc.init();
 
-    std::vector<u32> bits = {0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0};
+    std::vector<std::uint32_t> bits = {0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0};
     for (auto b : bits) {
         enc.encodeBit(bm_enc, b);
     }
@@ -40,7 +40,7 @@ TEST_CASE("ArithmeticModel encode/decode symbol sequence", "[arithmetic]") {
     ArithmeticModel m_enc;
     m_enc.init(4, true);
 
-    std::vector<u32> symbols = {0, 1, 2, 3, 0, 1, 2, 3, 3, 2, 1, 0};
+    std::vector<std::uint32_t> symbols = {0, 1, 2, 3, 0, 1, 2, 3, 3, 2, 1, 0};
     for (auto s : symbols) {
         enc.encodeSymbol(m_enc, s);
     }
@@ -119,7 +119,7 @@ TEST_CASE("ArithmeticEncoder/Decoder raw byte/short/int/int64", "[arithmetic]") 
 
 TEST_CASE("ArithmeticBitModel large sequence roundtrip", "[arithmetic]") {
     constexpr int N = 2000;
-    std::vector<u32> bits(N);
+    std::vector<std::uint32_t> bits(N);
     std::srand(12345);
     for (int i = 0; i < N; i++) {
         bits[i] = std::rand() % 2;
@@ -149,9 +149,9 @@ TEST_CASE("ArithmeticBitModel large sequence roundtrip", "[arithmetic]") {
 
 TEST_CASE("ArithmeticModel large sequence roundtrip", "[arithmetic]") {
     constexpr int N = 5000;
-    constexpr u32 NUM_SYMBOLS = 16;
+    constexpr std::uint32_t NUM_SYMBOLS = 16;
 
-    std::vector<u32> symbols(N);
+    std::vector<std::uint32_t> symbols(N);
     std::srand(54321);
     for (int i = 0; i < N; i++) {
         symbols[i] = std::rand() % NUM_SYMBOLS;
@@ -220,9 +220,9 @@ TEST_CASE("Multiple models sharing same encoder/decoder", "[arithmetic]") {
 
 TEST_CASE("ArithmeticModel adaptive updating", "[arithmetic]") {
     constexpr int N = 10000;
-    constexpr u32 NUM_SYMBOLS = 8;
+    constexpr std::uint32_t NUM_SYMBOLS = 8;
 
-    std::vector<u32> symbols(N);
+    std::vector<std::uint32_t> symbols(N);
     for (int i = 0; i < N; i++) {
         symbols[i] = (i < N / 2) ? 0 : 7;
     }
@@ -273,10 +273,10 @@ TEST_CASE("ArithmeticModel single symbol", "[arithmetic]") {
 }
 
 TEST_CASE("ArithmeticModel max symbols (2048)", "[arithmetic]") {
-    constexpr u32 MAX_SYMBOLS = 2048;
+    constexpr std::uint32_t MAX_SYMBOLS = 2048;
     constexpr int N = 500;
 
-    std::vector<u32> symbols(N);
+    std::vector<std::uint32_t> symbols(N);
     std::srand(99999);
     for (int i = 0; i < N; i++) {
         symbols[i] = std::rand() % MAX_SYMBOLS;

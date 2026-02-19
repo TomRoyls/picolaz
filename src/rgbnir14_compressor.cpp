@@ -18,7 +18,7 @@ void RGBNIR14Compressor::init(ByteStreamOut* main_out) {
     for (auto& ctx : contexts_) ctx.unused = true;
 }
 
-void RGBNIR14Compressor::init_context(u32 sc) {
+void RGBNIR14Compressor::init_context(std::uint32_t sc) {
     auto& ctx = contexts_[sc];
     ctx.unused = false;
 
@@ -46,12 +46,12 @@ void RGBNIR14Compressor::init_context(u32 sc) {
     ctx.m_nir_diff_1->init(256, true);
 }
 
-void RGBNIR14Compressor::write(const u16* rgbnir) {
+void RGBNIR14Compressor::write(const std::uint16_t* rgbnir) {
     if (first_point_) {
         first_point_ = false;
 
-        rgb_out_.put_bytes(reinterpret_cast<const u8*>(rgbnir), 6);
-        nir_out_.put_bytes(reinterpret_cast<const u8*>(&rgbnir[3]), 2);
+        rgb_out_.put_bytes(reinterpret_cast<const std::uint8_t*>(rgbnir), 6);
+        nir_out_.put_bytes(reinterpret_cast<const std::uint8_t*>(&rgbnir[3]), 2);
 
         init_context(current_context_);
         auto& ctx = contexts_[current_context_];
@@ -65,22 +65,22 @@ void RGBNIR14Compressor::write(const u16* rgbnir) {
     auto& ctx = contexts_[current_context_];
 
     // RGB part
-    i32 diff_r = static_cast<i32>(rgbnir[0]) - static_cast<i32>(ctx.last_item[0]);
-    i32 diff_g = static_cast<i32>(rgbnir[1]) - static_cast<i32>(ctx.last_item[1]);
-    i32 diff_b = static_cast<i32>(rgbnir[2]) - static_cast<i32>(ctx.last_item[2]);
+    std::int32_t diff_r = static_cast<std::int32_t>(rgbnir[0]) - static_cast<std::int32_t>(ctx.last_item[0]);
+    std::int32_t diff_g = static_cast<std::int32_t>(rgbnir[1]) - static_cast<std::int32_t>(ctx.last_item[1]);
+    std::int32_t diff_b = static_cast<std::int32_t>(rgbnir[2]) - static_cast<std::int32_t>(ctx.last_item[2]);
 
-    auto corr_r = static_cast<u16>(diff_r);
-    auto corr_g = static_cast<u16>(diff_g);
-    auto corr_b = static_cast<u16>(diff_b);
+    auto corr_r = static_cast<std::uint16_t>(diff_r);
+    auto corr_g = static_cast<std::uint16_t>(diff_g);
+    auto corr_b = static_cast<std::uint16_t>(diff_b);
 
-    u8 corr_r_lo = static_cast<u8>(corr_r & 0xFF);
-    u8 corr_r_hi = static_cast<u8>(corr_r >> 8);
-    u8 corr_g_lo = static_cast<u8>(corr_g & 0xFF);
-    u8 corr_g_hi = static_cast<u8>(corr_g >> 8);
-    u8 corr_b_lo = static_cast<u8>(corr_b & 0xFF);
-    u8 corr_b_hi = static_cast<u8>(corr_b >> 8);
+    std::uint8_t corr_r_lo = static_cast<std::uint8_t>(corr_r & 0xFF);
+    std::uint8_t corr_r_hi = static_cast<std::uint8_t>(corr_r >> 8);
+    std::uint8_t corr_g_lo = static_cast<std::uint8_t>(corr_g & 0xFF);
+    std::uint8_t corr_g_hi = static_cast<std::uint8_t>(corr_g >> 8);
+    std::uint8_t corr_b_lo = static_cast<std::uint8_t>(corr_b & 0xFF);
+    std::uint8_t corr_b_hi = static_cast<std::uint8_t>(corr_b >> 8);
 
-    u32 sym = 0;
+    std::uint32_t sym = 0;
     if (corr_r_lo) sym |= 1;
     if (corr_r_hi) sym |= 2;
     if (corr_g_lo) sym |= 4;
@@ -96,18 +96,18 @@ void RGBNIR14Compressor::write(const u16* rgbnir) {
     if (sym & 64) rgb_enc_.encodeSymbol(*ctx.m_rgb_diff_2, corr_g_lo);
     if (sym & 8) rgb_enc_.encodeSymbol(*ctx.m_rgb_diff_3, corr_g_hi);
     if (sym & 16) {
-        u8 b_lo = (sym & 64) ? corr_b_lo : static_cast<u8>((corr_b_lo - corr_g_lo) & 0xFF);
+        std::uint8_t b_lo = (sym & 64) ? corr_b_lo : static_cast<std::uint8_t>((corr_b_lo - corr_g_lo) & 0xFF);
         rgb_enc_.encodeSymbol(*ctx.m_rgb_diff_4, b_lo);
     }
     if (sym & 32) rgb_enc_.encodeSymbol(*ctx.m_rgb_diff_5, corr_b_hi);
 
     // NIR part
-    i32 diff_nir = static_cast<i32>(rgbnir[3]) - static_cast<i32>(ctx.last_item[3]);
-    auto corr_nir = static_cast<u16>(diff_nir);
-    u8 corr_nir_lo = static_cast<u8>(corr_nir & 0xFF);
-    u8 corr_nir_hi = static_cast<u8>(corr_nir >> 8);
+    std::int32_t diff_nir = static_cast<std::int32_t>(rgbnir[3]) - static_cast<std::int32_t>(ctx.last_item[3]);
+    auto corr_nir = static_cast<std::uint16_t>(diff_nir);
+    std::uint8_t corr_nir_lo = static_cast<std::uint8_t>(corr_nir & 0xFF);
+    std::uint8_t corr_nir_hi = static_cast<std::uint8_t>(corr_nir >> 8);
 
-    u32 nir_sym = 0;
+    std::uint32_t nir_sym = 0;
     if (corr_nir_lo) nir_sym |= 1;
     if (corr_nir_hi) nir_sym |= 2;
 
@@ -125,10 +125,10 @@ void RGBNIR14Compressor::chunk_sizes() {
     rgb_enc_.done();
     nir_enc_.done();
 
-    u32 rgb_size = rgb_out_.size();
-    u32 nir_size = nir_out_.size();
-    main_out_->put_bytes(reinterpret_cast<const u8*>(&rgb_size), 4);
-    main_out_->put_bytes(reinterpret_cast<const u8*>(&nir_size), 4);
+    std::uint32_t rgb_size = rgb_out_.size();
+    std::uint32_t nir_size = nir_out_.size();
+    main_out_->put_bytes(reinterpret_cast<const std::uint8_t*>(&rgb_size), 4);
+    main_out_->put_bytes(reinterpret_cast<const std::uint8_t*>(&nir_size), 4);
 }
 
 void RGBNIR14Compressor::chunk_bytes() {

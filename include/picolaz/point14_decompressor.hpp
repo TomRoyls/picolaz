@@ -14,19 +14,19 @@ public:
 
     void chunk_sizes(ByteStreamIn* in);
     void init(ByteStreamIn* in);
-    void read(u8* raw_bytes);
+    void read(std::uint8_t* raw_bytes);
 
 private:
-    void init_context(u32 sc);
+    void init_context(std::uint32_t sc);
     void read_gpstime(PackedPoint14* point, LAScontextPOINT14& ctx);
 
-    std::vector<u8> layer_data_;
-    std::array<u32, POINT14_NUM_LAYERS> layer_sizes_{};
+    std::vector<std::uint8_t> layer_data_;
+    std::array<std::uint32_t, POINT14_NUM_LAYERS> layer_sizes_{};
     std::array<ByteStreamIn, POINT14_NUM_LAYERS> layer_in_;
     std::array<ArithmeticDecoder, POINT14_NUM_LAYERS> layer_dec_;
 
     LAScontextPOINT14 contexts_[4];
-    u32 current_context_{0};
+    std::uint32_t current_context_{0};
     bool first_point_{true};
 };
 

@@ -12,7 +12,7 @@ void Point14Compressor::init(ByteStreamOut* main_out) {
     first_point_ = true;
     current_context_ = 0;
 
-    for (u32 i = 0; i < POINT14_NUM_LAYERS; ++i) {
+    for (std::uint32_t i = 0; i < POINT14_NUM_LAYERS; ++i) {
         layer_out_[i].clear();
         layer_enc_[i].init(&layer_out_[i]);
     }
@@ -22,7 +22,7 @@ void Point14Compressor::init(ByteStreamOut* main_out) {
     }
 }
 
-void Point14Compressor::init_context(u32 sc) {
+void Point14Compressor::init_context(std::uint32_t sc) {
     auto& ctx = contexts_[sc];
     ctx.unused = false;
 
@@ -37,16 +37,16 @@ void Point14Compressor::init_context(u32 sc) {
     auto& enc_gps = layer_enc_[LAYER_GPSTIME];
 
     ctx.m_changed_values = std::make_unique<ArithmeticModel[]>(8);
-    for (u32 i = 0; i < 8; ++i) ctx.m_changed_values[i].init(128, true);
+    for (std::uint32_t i = 0; i < 8; ++i) ctx.m_changed_values[i].init(128, true);
 
     ctx.m_scanner_channel = std::make_unique<ArithmeticModel>();
     ctx.m_scanner_channel->init(3, true);
 
     ctx.m_number_of_returns = std::make_unique<ArithmeticModel[]>(16);
-    for (u32 i = 0; i < 16; ++i) ctx.m_number_of_returns[i].init(16, true);
+    for (std::uint32_t i = 0; i < 16; ++i) ctx.m_number_of_returns[i].init(16, true);
 
     ctx.m_return_number = std::make_unique<ArithmeticModel[]>(16);
-    for (u32 i = 0; i < 16; ++i) ctx.m_return_number[i].init(16, true);
+    for (std::uint32_t i = 0; i < 16; ++i) ctx.m_return_number[i].init(16, true);
 
     ctx.m_return_number_gps_same = std::make_unique<ArithmeticModel>();
     ctx.m_return_number_gps_same->init(13, true);
@@ -67,13 +67,13 @@ void Point14Compressor::init_context(u32 sc) {
     ctx.ic_gpstime->initCompressor();
 
     ctx.m_classification = std::make_unique<ArithmeticModel[]>(64);
-    for (u32 i = 0; i < 64; ++i) ctx.m_classification[i].init(256, true);
+    for (std::uint32_t i = 0; i < 64; ++i) ctx.m_classification[i].init(256, true);
 
     ctx.m_flags = std::make_unique<ArithmeticModel[]>(64);
-    for (u32 i = 0; i < 64; ++i) ctx.m_flags[i].init(64, true);
+    for (std::uint32_t i = 0; i < 64; ++i) ctx.m_flags[i].init(64, true);
 
     ctx.m_user_data = std::make_unique<ArithmeticModel[]>(64);
-    for (u32 i = 0; i < 64; ++i) ctx.m_user_data[i].init(256, true);
+    for (std::uint32_t i = 0; i < 64; ++i) ctx.m_user_data[i].init(256, true);
 
     ctx.m_gpstime_multi = std::make_unique<ArithmeticModel>();
     ctx.m_gpstime_multi->init(GPSTIME_MULTI_TOTAL, true);
@@ -93,14 +93,14 @@ void Point14Compressor::init_context(u32 sc) {
     std::memset(ctx.last_Z, 0, sizeof(ctx.last_Z));
 }
 
-void Point14Compressor::write(const u8* raw_bytes) {
+void Point14Compressor::write(const std::uint8_t* raw_bytes) {
     auto* point = reinterpret_cast<const PackedPoint14*>(raw_bytes);
 
     if (first_point_) {
         first_point_ = false;
 
         // Write raw first point to all layers
-        for (u32 i = 0; i < POINT14_NUM_LAYERS; ++i) {
+        for (std::uint32_t i = 0; i < POINT14_NUM_LAYERS; ++i) {
             layer_out_[i].put_bytes(raw_bytes, sizeof(PackedPoint14));
         }
 
@@ -113,8 +113,8 @@ void Point14Compressor::write(const u8* raw_bytes) {
 
         auto* last = reinterpret_cast<PackedPoint14*>(ctx.last_item);
         ctx.last_gpstime[0].f = last->gps_time;
-        for (u32 i = 0; i < 8; ++i) ctx.last_intensity[i] = last->intensity;
-        for (u32 i = 0; i < 8; ++i) ctx.last_Z[i] = last->Z;
+        for (std::uint32_t i = 0; i < 8; ++i) ctx.last_intensity[i] = last->intensity;
+        for (std::uint32_t i = 0; i < 8; ++i) ctx.last_Z[i] = last->Z;
         return;
     }
 
@@ -124,16 +124,16 @@ void Point14Compressor::write(const u8* raw_bytes) {
     auto& enc_ud = layer_enc_[LAYER_USER_DATA];
 
     // Get last item from current context
-    u8* last_item = contexts_[current_context_].last_item;
+    std::uint8_t* last_item = contexts_[current_context_].last_item;
     auto* last = reinterpret_cast<PackedPoint14*>(last_item);
 
     // Compute lpr from LAST point — matches LASzip exactly
     // single(3) / first(1) / last(2) / intermediate(0)
-    i32 lpr = (last->return_number == 1 ? 1 : 0);
+    std::int32_t lpr = (last->return_number == 1 ? 1 : 0);
     lpr += (last->return_number >= last->number_of_returns ? 2 : 0);
     lpr += (last->gps_time_change ? 4 : 0);
 
-    u32 scanner_channel = point->scanner_channel;
+    std::uint32_t scanner_channel = point->scanner_channel;
 
     // If scanner channel changed and new context exists, get last from new context
     if (scanner_channel != current_context_) {
@@ -148,13 +148,13 @@ void Point14Compressor::write(const u8* raw_bytes) {
     bool gps_time_change = (point->gps_time != last->gps_time);
     bool scan_angle_change = (point->scan_angle != last->scan_angle);
 
-    u32 last_n = last->number_of_returns;
-    u32 last_r = last->return_number;
-    u32 n = point->number_of_returns;
-    u32 r = point->return_number;
+    std::uint32_t last_n = last->number_of_returns;
+    std::uint32_t last_r = last->return_number;
+    std::uint32_t n = point->number_of_returns;
+    std::uint32_t r = point->return_number;
 
     // Build 7-bit changed_values mask
-    i32 changed_values = ((scanner_channel != current_context_) ? (1 << 6) : 0) |
+    std::int32_t changed_values = ((scanner_channel != current_context_) ? (1 << 6) : 0) |
                          (point_source_change ? (1 << 5) : 0) |
                          (gps_time_change ? (1 << 4) : 0) |
                          (scan_angle_change ? (1 << 3) : 0) |
@@ -174,7 +174,7 @@ void Point14Compressor::write(const u8* raw_bytes) {
 
     // Scanner channel change
     if (changed_values & (1 << 6)) {
-        i32 diff = static_cast<i32>(scanner_channel) - static_cast<i32>(current_context_);
+        std::int32_t diff = static_cast<std::int32_t>(scanner_channel) - static_cast<std::int32_t>(current_context_);
         if (diff > 0) {
             enc_crxy.encodeSymbol(*contexts_[current_context_].m_scanner_channel, diff - 1);
         } else {
@@ -187,8 +187,8 @@ void Point14Compressor::write(const u8* raw_bytes) {
             std::memcpy(new_ctx.last_item, contexts_[current_context_].last_item, sizeof(PackedPoint14));
             auto* new_last = reinterpret_cast<PackedPoint14*>(new_ctx.last_item);
             new_ctx.last_gpstime[0].f = new_last->gps_time;
-            for (u32 i = 0; i < 8; ++i) new_ctx.last_intensity[i] = new_last->intensity;
-            for (u32 i = 0; i < 8; ++i) new_ctx.last_Z[i] = new_last->Z;
+            for (std::uint32_t i = 0; i < 8; ++i) new_ctx.last_intensity[i] = new_last->intensity;
+            for (std::uint32_t i = 0; i < 8; ++i) new_ctx.last_Z[i] = new_last->Z;
             reinterpret_cast<PackedPoint14*>(new_ctx.last_item)->gps_time_change = false;
             last_item = new_ctx.last_item;
             last = reinterpret_cast<PackedPoint14*>(last_item);
@@ -209,7 +209,7 @@ void Point14Compressor::write(const u8* raw_bytes) {
         if (gps_time_change) {
             enc_crxy.encodeSymbol(ctx.m_return_number[last_r], r);
         } else {
-            i32 rdiff = static_cast<i32>(r) - static_cast<i32>(last_r);
+            std::int32_t rdiff = static_cast<std::int32_t>(r) - static_cast<std::int32_t>(last_r);
             if (rdiff > 1) {
                 enc_crxy.encodeSymbol(*ctx.m_return_number_gps_same, rdiff - 2);
             } else {
@@ -219,45 +219,45 @@ void Point14Compressor::write(const u8* raw_bytes) {
     }
 
     // Get return map m and return level l
-    u32 m = number_return_map_6ctx[n][r];
-    u32 l = number_return_level_8ctx[n][r];
+    std::uint32_t m = number_return_map_6ctx[n][r];
+    std::uint32_t l = number_return_level_8ctx[n][r];
 
     // Create single(3)/first(2)/last(1)/intermediate(0) return context
-    i32 cpr = (r == 1 ? 2 : 0);
+    std::int32_t cpr = (r == 1 ? 2 : 0);
     cpr += (r >= n ? 1 : 0);
 
     // X coordinate
-    i32 median_x = ctx.last_X_diff_median5[(m << 1) | (gps_time_change ? 1 : 0)].get();
-    i32 diff_x = point->X - last->X;
+    std::int32_t median_x = ctx.last_X_diff_median5[(m << 1) | (gps_time_change ? 1 : 0)].get();
+    std::int32_t diff_x = point->X - last->X;
     ctx.ic_dX->compress(median_x, diff_x, n == 1 ? 1 : 0);
     ctx.last_X_diff_median5[(m << 1) | (gps_time_change ? 1 : 0)].add(diff_x);
 
     // Y coordinate
-    u32 k_bits_x = ctx.ic_dX->getK();
-    i32 median_y = ctx.last_Y_diff_median5[(m << 1) | (gps_time_change ? 1 : 0)].get();
-    i32 diff_y = point->Y - last->Y;
-    u32 y_ctx = (n == 1 ? 1 : 0) + (k_bits_x < 20 ? u32_zero_bit_0(k_bits_x) : 20);
+    std::uint32_t k_bits_x = ctx.ic_dX->getK();
+    std::int32_t median_y = ctx.last_Y_diff_median5[(m << 1) | (gps_time_change ? 1 : 0)].get();
+    std::int32_t diff_y = point->Y - last->Y;
+    std::uint32_t y_ctx = (n == 1 ? 1 : 0) + (k_bits_x < 20 ? u32_zero_bit_0(k_bits_x) : 20);
     ctx.ic_dY->compress(median_y, diff_y, y_ctx);
     ctx.last_Y_diff_median5[(m << 1) | (gps_time_change ? 1 : 0)].add(diff_y);
 
     // Z coordinate
-    u32 k_bits_y = ctx.ic_dY->getK();
-    u32 k_bits = (k_bits_x + k_bits_y) / 2;
-    u32 z_ctx = (n == 1 ? 1 : 0) + (k_bits < 18 ? u32_zero_bit_0(k_bits) : 18);
+    std::uint32_t k_bits_y = ctx.ic_dY->getK();
+    std::uint32_t k_bits = (k_bits_x + k_bits_y) / 2;
+    std::uint32_t z_ctx = (n == 1 ? 1 : 0) + (k_bits < 18 ? u32_zero_bit_0(k_bits) : 18);
     ctx.ic_Z->compress(ctx.last_Z[l], point->Z, z_ctx);
     ctx.last_Z[l] = point->Z;
 
     // Classification
-    u32 cls_ctx = ((last->classification & 0x1F) << 1) + (cpr == 3 ? 1 : 0);
+    std::uint32_t cls_ctx = ((last->classification & 0x1F) << 1) + (cpr == 3 ? 1 : 0);
     enc_cls.encodeSymbol(ctx.m_classification[cls_ctx], point->classification);
 
     // Flags
-    u32 last_flags = (static_cast<u32>(last->edge_of_flight_line) << 5) |
-                     (static_cast<u32>(last->scan_direction_flag) << 4) |
-                     static_cast<u32>(last->classification_flags);
-    u32 flags_val = (static_cast<u32>(point->edge_of_flight_line) << 5) |
-                    (static_cast<u32>(point->scan_direction_flag) << 4) |
-                    static_cast<u32>(point->classification_flags);
+    std::uint32_t last_flags = (static_cast<std::uint32_t>(last->edge_of_flight_line) << 5) |
+                     (static_cast<std::uint32_t>(last->scan_direction_flag) << 4) |
+                     static_cast<std::uint32_t>(last->classification_flags);
+    std::uint32_t flags_val = (static_cast<std::uint32_t>(point->edge_of_flight_line) << 5) |
+                    (static_cast<std::uint32_t>(point->scan_direction_flag) << 4) |
+                    static_cast<std::uint32_t>(point->classification_flags);
     enc_flags.encodeSymbol(ctx.m_flags[last_flags], flags_val);
 
     // Intensity
@@ -272,7 +272,7 @@ void Point14Compressor::write(const u8* raw_bytes) {
     }
 
     // User data
-    u32 ud_ctx = last->user_data / 4;
+    std::uint32_t ud_ctx = last->user_data / 4;
     enc_ud.encodeSymbol(ctx.m_user_data[ud_ctx], point->user_data);
 
     // Point source ID
@@ -296,13 +296,13 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
     U64I64F64 this_gpstime;
     this_gpstime.f = point->gps_time;
 
-    u32 last_seq = ctx.last_gpstime_seq;
+    std::uint32_t last_seq = ctx.last_gpstime_seq;
 
     if (ctx.last_gpstime_diff[last_seq] == 0) {
-        i64 curr_gpstime_diff_64 = this_gpstime.i - ctx.last_gpstime[last_seq].i;
-        i32 curr_gpstime_diff = static_cast<i32>(curr_gpstime_diff_64);
+        std::int64_t curr_gpstime_diff_64 = this_gpstime.i - ctx.last_gpstime[last_seq].i;
+        std::int32_t curr_gpstime_diff = static_cast<std::int32_t>(curr_gpstime_diff_64);
 
-        if (curr_gpstime_diff_64 == static_cast<i64>(curr_gpstime_diff)) {
+        if (curr_gpstime_diff_64 == static_cast<std::int64_t>(curr_gpstime_diff)) {
             // Fits in 32 bits
             enc.encodeSymbol(*ctx.m_gpstime_0diff, 0);
             ctx.ic_gpstime->compress(0, curr_gpstime_diff, 0);
@@ -310,10 +310,10 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
             ctx.multi_extreme_counter[last_seq] = 0;
         } else {
             // Try other sequences
-            for (u32 i = 1; i < 4; ++i) {
-                i64 other_diff = this_gpstime.i - ctx.last_gpstime[(last_seq + i) & 3].i;
-                i32 other_diff_32 = static_cast<i32>(other_diff);
-                if (other_diff == static_cast<i64>(other_diff_32)) {
+            for (std::uint32_t i = 1; i < 4; ++i) {
+                std::int64_t other_diff = this_gpstime.i - ctx.last_gpstime[(last_seq + i) & 3].i;
+                std::int32_t other_diff_32 = static_cast<std::int32_t>(other_diff);
+                if (other_diff == static_cast<std::int64_t>(other_diff_32)) {
                     enc.encodeSymbol(*ctx.m_gpstime_0diff, i + 1);
                     ctx.last_gpstime_seq = (last_seq + i) & 3;
                     write_gpstime(point, ctx);
@@ -322,9 +322,9 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
             }
             // Start new sequence
             enc.encodeSymbol(*ctx.m_gpstime_0diff, 1);
-            ctx.ic_gpstime->compress(static_cast<i32>(ctx.last_gpstime[last_seq].u >> 32),
-                                     static_cast<i32>(this_gpstime.u >> 32), 8);
-            enc.writeInt(static_cast<u32>(this_gpstime.u));
+            ctx.ic_gpstime->compress(static_cast<std::int32_t>(ctx.last_gpstime[last_seq].u >> 32),
+                                     static_cast<std::int32_t>(this_gpstime.u >> 32), 8);
+            enc.writeInt(static_cast<std::uint32_t>(this_gpstime.u));
             ctx.next_gpstime_seq = (ctx.next_gpstime_seq + 1) & 3;
             ctx.last_gpstime_seq = ctx.next_gpstime_seq;
             ctx.last_gpstime_diff[ctx.last_gpstime_seq] = 0;
@@ -335,13 +335,13 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
     }
 
     // last_gpstime_diff != 0
-    i64 curr_gpstime_diff_64 = this_gpstime.i - ctx.last_gpstime[last_seq].i;
-    i32 curr_gpstime_diff = static_cast<i32>(curr_gpstime_diff_64);
+    std::int64_t curr_gpstime_diff_64 = this_gpstime.i - ctx.last_gpstime[last_seq].i;
+    std::int32_t curr_gpstime_diff = static_cast<std::int32_t>(curr_gpstime_diff_64);
 
-    if (curr_gpstime_diff_64 == static_cast<i64>(curr_gpstime_diff)) {
-        f32 multi_f = static_cast<f32>(curr_gpstime_diff) /
-                      static_cast<f32>(ctx.last_gpstime_diff[last_seq]);
-        i32 multi = i32_quantize(multi_f);
+    if (curr_gpstime_diff_64 == static_cast<std::int64_t>(curr_gpstime_diff)) {
+        float multi_f = static_cast<float>(curr_gpstime_diff) /
+                      static_cast<float>(ctx.last_gpstime_diff[last_seq]);
+        std::int32_t multi = i32_quantize(multi_f);
 
         if (multi == 1) {
             enc.encodeSymbol(*ctx.m_gpstime_multi, 1);
@@ -350,7 +350,7 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
         } else if (multi > 0) {
             if (multi < GPSTIME_MULTI) {
                 enc.encodeSymbol(*ctx.m_gpstime_multi, multi);
-                u32 gps_ctx = (multi < 10) ? 2 : 3;
+                std::uint32_t gps_ctx = (multi < 10) ? 2 : 3;
                 ctx.ic_gpstime->compress(multi * ctx.last_gpstime_diff[last_seq],
                                          curr_gpstime_diff, gps_ctx);
             } else {
@@ -393,9 +393,9 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
         }
     } else {
         enc.encodeSymbol(*ctx.m_gpstime_multi, GPSTIME_MULTI_CODE_FULL);
-        ctx.ic_gpstime->compress(static_cast<i32>(ctx.last_gpstime[last_seq].u >> 32),
-                                 static_cast<i32>(this_gpstime.u >> 32), 8);
-        enc.writeInt(static_cast<u32>(this_gpstime.u));
+        ctx.ic_gpstime->compress(static_cast<std::int32_t>(ctx.last_gpstime[last_seq].u >> 32),
+                                 static_cast<std::int32_t>(this_gpstime.u >> 32), 8);
+        enc.writeInt(static_cast<std::uint32_t>(this_gpstime.u));
         ctx.next_gpstime_seq = (ctx.next_gpstime_seq + 1) & 3;
         ctx.last_gpstime_seq = ctx.next_gpstime_seq;
         ctx.last_gpstime_diff[ctx.last_gpstime_seq] = 0;
@@ -406,18 +406,18 @@ void Point14Compressor::write_gpstime(const PackedPoint14* point, LAScontextPOIN
 }
 
 void Point14Compressor::chunk_sizes() {
-    for (u32 i = 0; i < POINT14_NUM_LAYERS; ++i) {
+    for (std::uint32_t i = 0; i < POINT14_NUM_LAYERS; ++i) {
         layer_enc_[i].done();
     }
 
-    for (u32 i = 0; i < POINT14_NUM_LAYERS; ++i) {
-        u32 size = layer_out_[i].size();
-        main_out_->put_bytes(reinterpret_cast<const u8*>(&size), 4);
+    for (std::uint32_t i = 0; i < POINT14_NUM_LAYERS; ++i) {
+        std::uint32_t size = layer_out_[i].size();
+        main_out_->put_bytes(reinterpret_cast<const std::uint8_t*>(&size), 4);
     }
 }
 
 void Point14Compressor::chunk_bytes() {
-    for (u32 i = 0; i < POINT14_NUM_LAYERS; ++i) {
+    for (std::uint32_t i = 0; i < POINT14_NUM_LAYERS; ++i) {
         if (layer_out_[i].size() > 0) {
             main_out_->put_bytes(layer_out_[i].data(), layer_out_[i].size());
         }

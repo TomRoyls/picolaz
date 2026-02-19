@@ -29,7 +29,7 @@ TEST_CASE("StreamingMedian5 after adding five values", "[streaming_median]") {
         m.add(3);
         m.add(4);
         m.add(5);
-        i32 med = m.get();
+        std::int32_t med = m.get();
         CHECK(med >= 0);
         CHECK(med <= 5);
     }
@@ -40,7 +40,7 @@ TEST_CASE("StreamingMedian5 after adding five values", "[streaming_median]") {
         m.add(3);
         m.add(2);
         m.add(1);
-        i32 med = m.get();
+        std::int32_t med = m.get();
         CHECK(med >= 0);
         CHECK(med <= 5);
     }
@@ -63,7 +63,7 @@ TEST_CASE("StreamingMedian5 alternating high/low", "[streaming_median]") {
     m.add(100);
     m.add(-100);
     m.add(100);
-    i32 med = m.get();
+    std::int32_t med = m.get();
     CHECK(med >= -100);
     CHECK(med <= 100);
 }
@@ -76,7 +76,7 @@ TEST_CASE("StreamingMedian5 negative values", "[streaming_median]") {
     m.add(-1);
     m.add(-7);
     m.add(-9);
-    i32 med = m.get();
+    std::int32_t med = m.get();
     CHECK(med >= -9);
     CHECK(med <= -1);
 }
@@ -87,7 +87,7 @@ TEST_CASE("StreamingMedian5 many values converge", "[streaming_median]") {
     for (int i = 0; i < 100; i++) {
         m.add(50 + (i % 5) - 2);
     }
-    i32 med = m.get();
+    std::int32_t med = m.get();
     CHECK(med >= 48);
     CHECK(med <= 52);
 }
@@ -112,7 +112,7 @@ TEST_CASE("StreamingMedian5 large values", "[streaming_median]") {
     m.add(3000000);
     m.add(4000000);
     m.add(5000000);
-    i32 med = m.get();
+    std::int32_t med = m.get();
     CHECK(med >= 0);
     CHECK(med <= 5000000);
 }

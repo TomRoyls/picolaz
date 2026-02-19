@@ -18,7 +18,7 @@ struct TempFile {
     std::string str() const { return path.string(); }
 };
 
-Point14 make_point(i32 x, i32 y, i32 z, f64 gps_time = 0.0) {
+Point14 make_point(std::int32_t x, std::int32_t y, std::int32_t z, double gps_time = 0.0) {
     Point14 pt;
     pt.x = x;
     pt.y = y;
@@ -32,22 +32,22 @@ Point14 make_full_point(int i) {
     pt.x = 1000 + i * 10;
     pt.y = 2000 + i * 5;
     pt.z = 500 + (i % 100);
-    pt.intensity = static_cast<u16>(i % 65536);
-    pt.return_number = static_cast<u8>((i % 4) + 1);
-    pt.number_of_returns = static_cast<u8>((i % 4) + 1);
-    pt.classification_flags = static_cast<u8>(i % 16);
-    pt.scanner_channel = static_cast<u8>(i % 4);
-    pt.scan_direction_flag = static_cast<u8>(i % 2);
-    pt.edge_of_flight_line = static_cast<u8>((i + 1) % 2);
-    pt.classification = static_cast<u8>(i % 256);
-    pt.user_data = static_cast<u8>((i * 7) % 256);
-    pt.scan_angle = static_cast<i16>((i % 1000) - 500);
-    pt.point_source_id = static_cast<u16>(i % 10);
+    pt.intensity = static_cast<std::uint16_t>(i % 65536);
+    pt.return_number = static_cast<std::uint8_t>((i % 4) + 1);
+    pt.number_of_returns = static_cast<std::uint8_t>((i % 4) + 1);
+    pt.classification_flags = static_cast<std::uint8_t>(i % 16);
+    pt.scanner_channel = static_cast<std::uint8_t>(i % 4);
+    pt.scan_direction_flag = static_cast<std::uint8_t>(i % 2);
+    pt.edge_of_flight_line = static_cast<std::uint8_t>((i + 1) % 2);
+    pt.classification = static_cast<std::uint8_t>(i % 256);
+    pt.user_data = static_cast<std::uint8_t>((i * 7) % 256);
+    pt.scan_angle = static_cast<std::int16_t>((i % 1000) - 500);
+    pt.point_source_id = static_cast<std::uint16_t>(i % 10);
     pt.gps_time = 1000000.0 + i * 0.001;
-    pt.red = static_cast<u16>((i * 3) % 65536);
-    pt.green = static_cast<u16>((i * 5) % 65536);
-    pt.blue = static_cast<u16>((i * 7) % 65536);
-    pt.nir = static_cast<u16>((i * 11) % 65536);
+    pt.red = static_cast<std::uint16_t>((i * 3) % 65536);
+    pt.green = static_cast<std::uint16_t>((i * 5) % 65536);
+    pt.blue = static_cast<std::uint16_t>((i * 7) % 65536);
+    pt.nir = static_cast<std::uint16_t>((i * 11) % 65536);
     return pt;
 }
 
@@ -318,7 +318,7 @@ TEST_CASE("Roundtrip varying scanner channels", "[roundtrip]") {
     std::vector<Point14> points(N);
     for (int i = 0; i < N; i++) {
         points[i] = make_point(i * 100, i * 200, i * 50, 1000.0 + i);
-        points[i].scanner_channel = static_cast<u8>(i % 4);
+        points[i].scanner_channel = static_cast<std::uint8_t>(i % 4);
         points[i].return_number = 1;
         points[i].number_of_returns = 1;
     }
@@ -353,7 +353,7 @@ TEST_CASE("Roundtrip varying classifications", "[roundtrip]") {
     std::vector<Point14> points(N);
     for (int i = 0; i < N; i++) {
         points[i] = make_point(i, i, i, 1000.0 + i);
-        points[i].classification = static_cast<u8>(i);
+        points[i].classification = static_cast<std::uint8_t>(i);
         points[i].return_number = 1;
         points[i].number_of_returns = 1;
     }

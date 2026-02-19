@@ -19,11 +19,11 @@ TEST_CASE("ByteStreamOut basic write and read back", "[streams]") {
     }
 
     SECTION("write byte array") {
-        u8 data[] = {1, 2, 3, 4, 5};
+        std::uint8_t data[] = {1, 2, 3, 4, 5};
         out.put_bytes(data, 5);
 
         CHECK(out.size() == 5);
-        for (u32 i = 0; i < 5; i++) {
+        for (std::uint32_t i = 0; i < 5; i++) {
             CHECK(out.data()[i] == i + 1);
         }
     }
@@ -34,7 +34,7 @@ TEST_CASE("ByteStreamOut basic write and read back", "[streams]") {
         CHECK(out.position() == 1);
         out.put_byte(0x02);
         CHECK(out.position() == 2);
-        u8 data[10] = {};
+        std::uint8_t data[10] = {};
         out.put_bytes(data, 10);
         CHECK(out.position() == 12);
     }
@@ -62,16 +62,16 @@ TEST_CASE("ByteStreamOut 16/32/64 bit writes", "[streams]") {
     ByteStreamOut out;
 
     SECTION("put_16bits_le") {
-        u16 val = 0x1234;
-        out.put_16bits_le(reinterpret_cast<const u8*>(&val));
+        std::uint16_t val = 0x1234;
+        out.put_16bits_le(reinterpret_cast<const std::uint8_t*>(&val));
         CHECK(out.size() == 2);
         CHECK(out.data()[0] == 0x34);
         CHECK(out.data()[1] == 0x12);
     }
 
     SECTION("put_32bits_le") {
-        u32 val = 0x12345678;
-        out.put_32bits_le(reinterpret_cast<const u8*>(&val));
+        std::uint32_t val = 0x12345678;
+        out.put_32bits_le(reinterpret_cast<const std::uint8_t*>(&val));
         CHECK(out.size() == 4);
         CHECK(out.data()[0] == 0x78);
         CHECK(out.data()[1] == 0x56);
@@ -80,8 +80,8 @@ TEST_CASE("ByteStreamOut 16/32/64 bit writes", "[streams]") {
     }
 
     SECTION("put_64bits_le") {
-        u64 val = 0x0102030405060708ULL;
-        out.put_64bits_le(reinterpret_cast<const u8*>(&val));
+        std::uint64_t val = 0x0102030405060708ULL;
+        out.put_64bits_le(reinterpret_cast<const std::uint8_t*>(&val));
         CHECK(out.size() == 8);
         CHECK(out.data()[0] == 0x08);
         CHECK(out.data()[7] == 0x01);
@@ -89,7 +89,7 @@ TEST_CASE("ByteStreamOut 16/32/64 bit writes", "[streams]") {
 }
 
 TEST_CASE("ByteStreamIn basic read", "[streams]") {
-    u8 data[] = {0x42, 0xFF, 0x00, 0xAB};
+    std::uint8_t data[] = {0x42, 0xFF, 0x00, 0xAB};
     ByteStreamIn in(data, 4);
 
     SECTION("read single bytes") {
@@ -118,7 +118,7 @@ TEST_CASE("ByteStreamIn basic read", "[streams]") {
     }
 
     SECTION("get_bytes") {
-        u8 buf[4];
+        std::uint8_t buf[4];
         in.get_bytes(buf, 4);
         CHECK(buf[0] == 0x42);
         CHECK(buf[1] == 0xFF);
@@ -135,26 +135,26 @@ TEST_CASE("ByteStreamIn basic read", "[streams]") {
 
 TEST_CASE("ByteStreamIn 16/32/64 bit reads", "[streams]") {
     SECTION("get_16bits_le") {
-        u8 data[] = {0x34, 0x12};
+        std::uint8_t data[] = {0x34, 0x12};
         ByteStreamIn in(data, 2);
-        u16 val = 0;
-        in.get_16bits_le(reinterpret_cast<u8*>(&val));
+        std::uint16_t val = 0;
+        in.get_16bits_le(reinterpret_cast<std::uint8_t*>(&val));
         CHECK(val == 0x1234);
     }
 
     SECTION("get_32bits_le") {
-        u8 data[] = {0x78, 0x56, 0x34, 0x12};
+        std::uint8_t data[] = {0x78, 0x56, 0x34, 0x12};
         ByteStreamIn in(data, 4);
-        u32 val = 0;
-        in.get_32bits_le(reinterpret_cast<u8*>(&val));
+        std::uint32_t val = 0;
+        in.get_32bits_le(reinterpret_cast<std::uint8_t*>(&val));
         CHECK(val == 0x12345678);
     }
 
     SECTION("get_64bits_le") {
-        u8 data[] = {0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01};
+        std::uint8_t data[] = {0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01};
         ByteStreamIn in(data, 8);
-        u64 val = 0;
-        in.get_64bits_le(reinterpret_cast<u8*>(&val));
+        std::uint64_t val = 0;
+        in.get_64bits_le(reinterpret_cast<std::uint8_t*>(&val));
         CHECK(val == 0x0102030405060708ULL);
     }
 }
@@ -162,37 +162,37 @@ TEST_CASE("ByteStreamIn 16/32/64 bit reads", "[streams]") {
 TEST_CASE("ByteStreamOut/In roundtrip", "[streams]") {
     ByteStreamOut out;
 
-    u16 v16 = 0xBEEF;
-    u32 v32 = 0xDEADBEEF;
-    u64 v64 = 0x0123456789ABCDEFULL;
+    std::uint16_t v16 = 0xBEEF;
+    std::uint32_t v32 = 0xDEADBEEF;
+    std::uint64_t v64 = 0x0123456789ABCDEFULL;
 
     out.put_byte(0x42);
-    out.put_16bits_le(reinterpret_cast<const u8*>(&v16));
-    out.put_32bits_le(reinterpret_cast<const u8*>(&v32));
-    out.put_64bits_le(reinterpret_cast<const u8*>(&v64));
+    out.put_16bits_le(reinterpret_cast<const std::uint8_t*>(&v16));
+    out.put_32bits_le(reinterpret_cast<const std::uint8_t*>(&v32));
+    out.put_64bits_le(reinterpret_cast<const std::uint8_t*>(&v64));
 
     ByteStreamIn in(out.data(), out.size());
 
     CHECK(in.get_byte() == 0x42);
 
-    u16 r16 = 0;
-    in.get_16bits_le(reinterpret_cast<u8*>(&r16));
+    std::uint16_t r16 = 0;
+    in.get_16bits_le(reinterpret_cast<std::uint8_t*>(&r16));
     CHECK(r16 == v16);
 
-    u32 r32 = 0;
-    in.get_32bits_le(reinterpret_cast<u8*>(&r32));
+    std::uint32_t r32 = 0;
+    in.get_32bits_le(reinterpret_cast<std::uint8_t*>(&r32));
     CHECK(r32 == v32);
 
-    u64 r64 = 0;
-    in.get_64bits_le(reinterpret_cast<u8*>(&r64));
+    std::uint64_t r64 = 0;
+    in.get_64bits_le(reinterpret_cast<std::uint8_t*>(&r64));
     CHECK(r64 == v64);
 
     CHECK(in.remaining() == 0);
 }
 
 TEST_CASE("ByteStreamIn init reinitializes stream", "[streams]") {
-    u8 data1[] = {1, 2, 3};
-    u8 data2[] = {4, 5};
+    std::uint8_t data1[] = {1, 2, 3};
+    std::uint8_t data2[] = {4, 5};
 
     ByteStreamIn in(data1, 3);
     CHECK(in.get_byte() == 1);
@@ -205,10 +205,10 @@ TEST_CASE("ByteStreamIn init reinitializes stream", "[streams]") {
 }
 
 TEST_CASE("ByteStreamIn get_bytes past end zero-fills", "[streams]") {
-    u8 data[] = {0xAA, 0xBB};
+    std::uint8_t data[] = {0xAA, 0xBB};
     ByteStreamIn in(data, 2);
 
-    u8 buf[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    std::uint8_t buf[4] = {0xFF, 0xFF, 0xFF, 0xFF};
     in.get_bytes(buf, 4);
 
     CHECK(buf[0] == 0xAA);
