@@ -1,3 +1,7 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 #include "picolaz/laz_writer.hpp"
 #include <algorithm>
 #include <cstring>
@@ -35,7 +39,7 @@ LazWriter::~LazWriter() {
 }
 
 void LazWriter::write_header() {
-    std::memset(&header_, 0, sizeof(LasHeader));
+    header_ = LasHeader{}; // Value-initialization
     header_.file_signature[0] = 'L';
     header_.file_signature[1] = 'A';
     header_.file_signature[2] = 'S';
@@ -100,8 +104,7 @@ void LazWriter::write_laszip_vlr() {
 
     laszip_vlr_.num_items = static_cast<std::uint16_t>(laszip_vlr_.items.size());
 
-    VlrHeader vlr_hdr;
-    std::memset(&vlr_hdr, 0, sizeof(VlrHeader));
+    VlrHeader vlr_hdr{};
     std::strncpy(vlr_hdr.user_id, "laszip encoded", 15);
     vlr_hdr.record_id = 22204;
 
@@ -231,8 +234,7 @@ void LazWriter::close() {
 }
 
 void LazWriter::write_chunk_table_evlr() {
-    EvlrHeader evlr_hdr;
-    std::memset(&evlr_hdr, 0, sizeof(EvlrHeader));
+    EvlrHeader evlr_hdr{};
     std::strncpy(evlr_hdr.user_id, "laszip encoded", 15);
     evlr_hdr.record_id = 0;
 

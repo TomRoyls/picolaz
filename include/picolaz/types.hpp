@@ -163,8 +163,35 @@ inline bool format_has_nir(PointFormat fmt) {
 }
 
 // ─── Exceptions ─────────────────────────────────────────────────────
+
+/// Base exception for all picolaz errors
 class LazError : public std::runtime_error {
+public:
     using std::runtime_error::runtime_error;
+};
+
+/// File I/O errors (open, read, write)
+class FileOpenError : public LazError {
+public:
+    using LazError::LazError;
+};
+
+/// Invalid file format or corrupt data
+class InvalidFormatError : public LazError {
+public:
+    using LazError::LazError;
+};
+
+/// Compression/decompression errors
+class CompressionError : public LazError {
+public:
+    using LazError::LazError;
+};
+
+/// Unsupported feature or version
+class UnsupportedError : public LazError {
+public:
+    using LazError::LazError;
 };
 
 } // namespace picolaz

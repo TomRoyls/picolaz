@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 cmake_minimum_required(VERSION 3.20)
 project(picolaz VERSION 0.1.0 LANGUAGES CXX)
 
@@ -28,6 +32,13 @@ target_include_directories(picolaz
 
 target_compile_features(picolaz PUBLIC cxx_std_20)
 
+# Compiler warnings
+if(MSVC)
+    target_compile_options(picolaz PRIVATE /W4)
+else()
+    target_compile_options(picolaz PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # Only build tests if this is the top-level project (not included via FetchContent)
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     option(PICOLAZ_BUILD_TESTS "Build picolaz tests" ON)
@@ -35,7 +46,59 @@ else()
     option(PICOLAZ_BUILD_TESTS "Build picolaz tests" OFF)
 endif()
 
-if(PICOLAZ_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
+# Examples
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    option(PICOLAZ_BUILD_EXAMPLES "Build picolaz examples" ON)
+else()
+    option(PICOLAZ_BUILD_EXAMPLES "Build picolaz examples" OFF)
 endif()
+
+if(PICOLAZ_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
+# Installation
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+# Install library
+install(TARGETS picolaz
+    EXPORT picolazTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install headers
+install(DIRECTORY include/picolaz
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.hpp"
+)
+
+# Install exported targets
+install(EXPORT picolazTargets
+    FILE picolazTargets.cmake
+    NAMESPACE picolaz::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/picolaz
+)
+
+# Generate package config file
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/picolazConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/picolazConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/picolaz
+)
+
+# Generate package version file
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/picolazConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+# Install config files
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/picolazConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/picolazConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/picolaz
+)

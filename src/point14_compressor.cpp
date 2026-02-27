@@ -1,8 +1,9 @@
-#include "picolaz/point14_compressor.hpp"
-#include <algorithm>
-#include <cstring>
-#include <cmath>
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+#include "picolaz/point14_compressor.hpp"
+#include <cstring>
 namespace picolaz {
 
 Point14Compressor::Point14Compressor() = default;
@@ -28,13 +29,14 @@ void Point14Compressor::init_context(std::uint32_t sc) {
 
     auto& enc_crxy = layer_enc_[LAYER_CHANNEL_RETURNS_XY];
     auto& enc_z = layer_enc_[LAYER_Z];
-    auto& enc_cls = layer_enc_[LAYER_CLASSIFICATION];
     auto& enc_flags = layer_enc_[LAYER_FLAGS];
     auto& enc_int = layer_enc_[LAYER_INTENSITY];
     auto& enc_sa = layer_enc_[LAYER_SCAN_ANGLE];
-    auto& enc_ud = layer_enc_[LAYER_USER_DATA];
     auto& enc_ps = layer_enc_[LAYER_POINT_SOURCE];
     auto& enc_gps = layer_enc_[LAYER_GPSTIME];
+
+    // Suppress unused warnings (these are used later in write())
+    (void)enc_z; (void)enc_flags; (void)enc_int; (void)enc_sa; (void)enc_ps; (void)enc_gps;
 
     ctx.m_changed_values = std::make_unique<ArithmeticModel[]>(8);
     for (std::uint32_t i = 0; i < 8; ++i) ctx.m_changed_values[i].init(128, true);
