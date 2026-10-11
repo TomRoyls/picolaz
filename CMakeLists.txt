@@ -58,6 +58,10 @@ endif()
 if(PICOLAZ_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+if(PICOLAZ_BUILD_TESTS)
+    include(CTest)
+    add_subdirectory(tests)
+endif()
 
 
 # Installation
