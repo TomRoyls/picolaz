@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(picolaz STATIC
+    src/point14_v3.cpp
+    src/rgb14_v3.cpp
     src/arithmetic_codec.cpp
     src/integer_compressor.cpp
     src/point14_compressor.cpp
@@ -56,6 +58,7 @@ endif()
 if(PICOLAZ_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
 
 # Installation
 include(GNUInstallDirs)
