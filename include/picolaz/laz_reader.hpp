@@ -1,9 +1,7 @@
 #pragma once
 
 #include "types.hpp"
-#include "point14_decompressor.hpp"
-#include "rgb14_decompressor.hpp"
-#include "rgbnir14_decompressor.hpp"
+#include "laz14_v3.hpp"
 #include <fstream>
 #include <memory>
 #include <string>
@@ -32,26 +30,31 @@ private:
     void find_laszip_vlr();
     void read_chunk_table();
     bool start_next_chunk();
-    void packed_to_point(const PackedPoint14& p, Point14& pt);
+    void record_to_point(const std::uint8_t* rec, Point14& pt);
 
     std::ifstream file_;
     LasHeader header_;
     PointFormat format_{PointFormat::Format6};
-    LaszipVlr laszip_vlr_;
+    std::uint32_t chunk_size_{50000};
 
-    Point14Decompressor point_decomp_;
-    std::unique_ptr<RGB14Decompressor> rgb_decomp_;
-    std::unique_ptr<RGBNIR14Decompressor> rgbnir_decomp_;
+    v3::Point14DecompressorV3 point_decomp_;
+    std::unique_ptr<v3::Rgb14DecompressorV3> rgb_decomp_;
+    std::unique_ptr<v3::RgbNir14DecompressorV3> rgbnir_decomp_;
 
-    std::vector<std::uint32_t> chunk_table_;
+    std::vector<std::uint64_t> chunk_offsets_;
+    std::vector<std::uint64_t> chunk_sizes_;
     std::uint32_t current_chunk_{0};
     std::uint32_t points_in_chunk_{0};
     std::uint32_t points_read_in_chunk_{0};
     std::uint64_t total_points_read_{0};
     bool closed_{false};
+    bool rgb_layer_{false};
+    bool nir_layer_{false};
 
     std::vector<std::uint8_t> chunk_data_;
-    ByteStreamIn chunk_in_;
+    std::uint64_t chunk_pos_{0};
+    std::uint8_t first_record_[38]{};
+    bool first_pending_{false};
 };
 
-} // namespace picolaz
+}

@@ -1,9 +1,7 @@
 #pragma once
 
 #include "types.hpp"
-#include "point14_compressor.hpp"
-#include "rgb14_compressor.hpp"
-#include "rgbnir14_compressor.hpp"
+#include "laz14_v3.hpp"
 #include <fstream>
 #include <memory>
 #include <string>
@@ -37,30 +35,31 @@ public:
 private:
     void write_header();
     void write_laszip_vlr();
-    void start_chunk();
+    void start_chunk(const Point14& pt);
     void finish_chunk();
-    void write_chunk_table_evlr();
-    void point_to_packed(const Point14& pt, PackedPoint14& packed);
+    void write_chunk_table();
+    void point_to_record(const Point14& pt, std::uint8_t* rec);
     void update_bounds(const Point14& pt);
 
     Config config_;
     std::ofstream file_;
     LasHeader header_;
-    LaszipVlr laszip_vlr_;
 
-    Point14Compressor point_comp_;
-    std::unique_ptr<RGB14Compressor> rgb_comp_;
-    std::unique_ptr<RGBNIR14Compressor> rgbnir_comp_;
+    v3::Point14CompressorV3 point_comp_;
+    std::unique_ptr<v3::Rgb14CompressorV3> rgb_comp_;
+    std::unique_ptr<v3::RgbNir14CompressorV3> rgbnir_comp_;
 
     ByteStreamOut chunk_out_;
-    std::vector<std::uint32_t> chunk_table_;
+    std::vector<std::uint64_t> chunk_total_sizes_;
     std::uint32_t points_in_chunk_{0};
     std::uint64_t total_points_{0};
     bool closed_{false};
+    std::uint64_t table_position_{0};
     bool chunk_started_{false};
+    bool chunk_table_written_{false};
 
     double min_x_{1e300}, min_y_{1e300}, min_z_{1e300};
     double max_x_{-1e300}, max_y_{-1e300}, max_z_{-1e300};
 };
 
-} // namespace picolaz
+}
